@@ -1,0 +1,493 @@
+<template>
+  <div class="oc">
+    <header class="oc-hero">
+      <div>
+        <p class="oc-kicker">Patient Outreach</p>
+        <h1 class="oc-title">Outreach Configuration</h1>
+        <p class="oc-sub">
+          Queue ranking, pressure gates, care-item rules, cadence, and
+          integrations — managed as Salesforce configuration, not hard-coded
+          logic.
+        </p>
+      </div>
+      <span class={accessBadgeClass}>{accessBadgeLabel}</span>
+    </header>
+
+    <template if:true={loading}>
+      <lightning-spinner alternative-text="Loading configuration" size="medium"></lightning-spinner>
+    </template>
+
+    <template if:true={error}>
+      <div class="oc-locked" role="alert">{error}</div>
+    </template>
+
+    <template if:false={loading}>
+      <template if:false={error}>
+        <div class="oc-shell">
+          <nav class="oc-nav" aria-label="Configuration sections">
+            <template for:each={sections} for:item="s">
+              <button key={s.id} type="button" class={s.className} data-section={s.id} onclick={handleNav}>
+                {s.label}
+              </button>
+            </template>
+          </nav>
+
+          <div class="oc-main">
+            <!-- QUEUE -->
+            <template if:true={isQueue}>
+              <section class="oc-panel">
+                <div class="oc-panel__head">
+                  <div>
+                    <h2 class="oc-panel__title">Queue &amp; ranking</h2>
+                    <p class="oc-panel__hint">
+                      Controls who can enter Unclaimed and how engagement score
+                      shapes Routing Priority. Defaults stay safe with Neutral
+                      ranking.
+                    </p>
+                  </div>
+                </div>
+
+                <template if:true={engine}>
+                  <div class="oc-grid">
+                    <p class="oc-section-label">Pressure gate</p>
+                    <lightning-input type="toggle" label="Block high-pressure patients"
+                      field-level-help="When on, patients whose Account Pressure Score is at or above the threshold are kept out of the Unclaimed queue (unless a care-item rule bypasses pressure)."
+                      checked={engine.pressureBlockEnabled} data-field="pressureBlockEnabled"
+                      onchange={handleEngineChange} disabled={inputsDisabled}></lightning-input>
+                    <lightning-input type="number" label="Pressure block threshold"
+                      field-level-help="Account Pressure_Score__c at or above this value is blocked from Unclaimed when the pressure gate is on. Typical default is 80."
+                      value={engine.pressureBlockThreshold} data-field="pressureBlockThreshold"
+                      onchange={handleEngineChange} step="0.1" disabled={inputsDisabled}></lightning-input>
+
+                    <p class="oc-section-label">Engagement ranking</p>
+                    <lightning-combobox label="Ranking strategy"
+                      field-level-help="How Account Engagement Score adjusts Unclaimed sort order. NEUTRAL ignores engagement. HIGH elevates engaged patients; LOW elevates disengaged; RANGE only boosts scores inside min/max; RANDOM shuffles within a time bucket."
+                      value={engine.rankingStrategy} options={rankingOptions} data-field="rankingStrategy"
+                      onchange={handleEngineChange} disabled={inputsDisabled}></lightning-combobox>
+                    <template if:true={showWeightFields}>
+                      <lightning-input type="number" label="Engagement weight"
+                        field-level-help="How strongly engagement can move Routing Priority when strategy is not NEUTRAL (points-equivalent weight, 0–9999)."
+                        value={engine.engagementWeight} data-field="engagementWeight" onchange={handleEngineChange}
+                        disabled={inputsDisabled}></lightning-input>
+                    </template>
+                    <template if:true={showRangeFields}>
+                      <lightning-input type="number" label="Range min"
+                        field-level-help="Lower bound of Engagement Score (−100 to 100) that receives a boost when Ranking strategy is RANGE."
+                        value={engine.engagementRangeMin} data-field="engagementRangeMin" onchange={handleEngineChange}
+                        disabled={inputsDisabled}></lightning-input>
+                      <lightning-input type="number" label="Range max"
+                        field-level-help="Upper bound of Engagement Score (−100 to 100) that receives a boost when Ranking strategy is RANGE."
+                        value={engine.engagementRangeMax} data-field="engagementRangeMax" onchange={handleEngineChange}
+                        disabled={inputsDisabled}></lightning-input>
+                    </template>
+                    <template if:true={showRandomFields}>
+                      <lightning-input type="number" label="Random salt hours"
+                        field-level-help="Hours between reshuffles of the random engagement boost when Ranking strategy is RANDOM (for example 24 = daily mix)."
+                        value={engine.randomSaltHours} data-field="randomSaltHours" onchange={handleEngineChange}
+                        disabled={inputsDisabled}></lightning-input>
+                    </template>
+
+                    <p class="oc-section-label">Default cadence fallbacks</p>
+                    <lightning-combobox label="Default cadence template"
+                      field-level-help="Cadence_Policy developer name used as the engine-wide default when a rule uses the global cadence (for example DEFAULT_WEEKLY)."
+                      value={engine.defaultCadenceTemplate} options={cadencePicklist}
+                      data-field="defaultCadenceTemplate" onchange={handleEngineChange}
+                      disabled={inputsDisabled}></lightning-combobox>
+                    <lightning-input type="number" label="Default max attempts"
+                      field-level-help="Engine default cap on outreach attempts for a care item before it is exhausted. Rule-specific cadence policies override this when assigned."
+                      value={engine.defaultMaxAttempts} data-field="defaultMaxAttempts" onchange={handleEngineChange}
+                      disabled={inputsDisabled}></lightning-input>
+                    <lightning-input type="number" label="Default attempt interval (days)"
+                      field-level-help="Engine default minimum days between outreach attempts (for example 7 = weekly). Rule cadence policies override when assigned."
+                      value={engine.defaultAttemptIntervalDays} data-field="defaultAttemptIntervalDays"
+                      onchange={handleEngineChange} disabled={inputsDisabled}></lightning-input>
+                  </div>
+                  <div class="oc-actions">
+                    <lightning-button label="Save queue settings" variant="brand" onclick={saveEngine}
+                      disabled={saveDisabled}></lightning-button>
+                  </div>
+                  <template if:false={canManage}>
+                    <p class="oc-locked slds-m-top_small">
+                      Assign the Outreach Configuration Admin permission set to
+                      edit these values.
+                    </p>
+                  </template>
+                </template>
+                <template if:false={engine}>
+                  <div class="oc-empty">No engine settings record found.</div>
+                </template>
+              </section>
+            </template>
+
+            <!-- RULES -->
+            <template if:true={isRules}>
+              <section class="oc-panel">
+                <div class="oc-panel__head">
+                  <div>
+                    <h2 class="oc-panel__title">Care item rules</h2>
+                    <p class="oc-panel__hint">
+                      Operational switches for each rule. Clinical eligibility
+                      still lives in RulesEngine; these flags control serving,
+                      cadence overrides, and pressure bypass.
+                    </p>
+                  </div>
+                </div>
+                <table class="oc-table">
+                  <thead>
+                    <tr>
+                      <th>Rule</th>
+                      <th>Family</th>
+                      <th>Status</th>
+                      <th>Pressure</th>
+                      <th>Email</th>
+                      <th>SMS</th>
+                      <th>Teams</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={ruleRows} for:item="row">
+                      <tr key={row.developerName}>
+                        <td>
+                          <strong>{row.displayLabel}</strong>
+                          <div class="slds-text-body_small slds-text-color_weak">
+                            {row.ruleId}
+                          </div>
+                        </td>
+                        <td>{row.family}</td>
+                        <td><span class={row.enabledClass}>{row.enabledLabel}</span></td>
+                        <td><span class={row.pressureClass}>{row.pressureLabel}</span></td>
+                        <td><span class={row.autoEmailClass}>{row.autoEmailLabel}</span></td>
+                        <td><span class={row.autoSmsClass}>{row.autoSmsLabel}</span></td>
+                        <td>{row.servedTeamsLabel}</td>
+                        <td class="oc-row-actions">
+                          <lightning-button label="Edit" data-id={row.developerName} onclick={selectRule}
+                            variant="base"></lightning-button>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+
+                <template if:true={draftRule}>
+                  <div class="oc-drawer">
+                    <h3 class="oc-panel__title">Edit {draftRule.displayLabel}</h3>
+                    <div class="oc-grid">
+                      <lightning-input label="Display label"
+                        field-level-help="Agent-facing name shown on the care item in Workbench."
+                        value={draftRule.displayLabel} data-field="displayLabel"
+                        onchange={handleRuleChange}></lightning-input>
+                      <lightning-input label="Sort order"
+                        field-level-help="Lower numbers surface earlier when multiple care items compete for attention."
+                        type="number" value={draftRule.sortOrder} data-field="sortOrder"
+                        onchange={handleRuleChange}></lightning-input>
+                      <lightning-textarea class="oc-field_span" label="Description"
+                        field-level-help="Internal admin notes about what this care-item rule covers."
+                        value={draftRule.description} data-field="description"
+                        onchange={handleRuleChange}></lightning-textarea>
+                      <lightning-input type="toggle" label="Enabled"
+                        field-level-help="When off, the rule does not create or serve live care items."
+                        checked={draftRule.enabled} data-field="enabled" onchange={handleRuleChange}></lightning-input>
+                      <lightning-input type="toggle" label="Shadow only"
+                        field-level-help="Evaluate the rule without affecting the live Unclaimed queue (observation / dry-run)."
+                        checked={draftRule.shadowOnly} data-field="shadowOnly"
+                        onchange={handleRuleChange}></lightning-input>
+                      <lightning-input type="toggle" label="Bypass pressure gate"
+                        field-level-help="Allow this care item into Unclaimed even when Account Pressure Score is above the block threshold. May shorten weekly cooldown to 1 day; still respects once-per-day contact max."
+                        checked={draftRule.bypassPressureGate} data-field="bypassPressureGate"
+                        onchange={handleRuleChange}></lightning-input>
+                      <lightning-input type="toggle" label="Override weekly cooldown"
+                        field-level-help="Bypass the default once-per-week patient queue cooldown for this rule (still subject to the daily floor when pressure bypass applies)."
+                        checked={draftRule.overrideWeeklyQueueCooldown} data-field="overrideWeeklyQueueCooldown"
+                        onchange={handleRuleChange}></lightning-input>
+                      <lightning-input type="toggle" label="Override daily attempt limit"
+                        field-level-help="Allow more than one contact attempt per day for this rule."
+                        checked={draftRule.overrideDailyAttemptLimit} data-field="overrideDailyAttemptLimit"
+                        onchange={handleRuleChange}></lightning-input>
+                      <lightning-input type="toggle" label="Force acknowledge"
+                        field-level-help="Require the agent to explicitly confirm this need was addressed before logging an outcome."
+                        checked={draftRule.forceAcknowledge} data-field="forceAcknowledge"
+                        onchange={handleRuleChange}></lightning-input>
+
+                      <p class="oc-section-label">Communication Settings</p>
+                      <p class="oc-section-hint">
+                        Controls Prefetch daily Email/SMS eligibility and the
+                        preference-center topic. GenAI lead theme still follows
+                        RulesEngine Points on the care item.
+                      </p>
+                      <lightning-combobox label="Communication topic"
+                        field-level-help="Preference-center topic key used for consent gates and unsubscribe scoping (marketing, appointment_reminders, surveys, educational)."
+                        value={draftRule.communicationTopic} options={communicationTopicOptions}
+                        data-field="communicationTopic" onchange={handleRuleChange}
+                        disabled={inputsDisabled}></lightning-combobox>
+                      <lightning-combobox label="Communication class"
+                        field-level-help="Marketing vs Transactional classification for this rule's digital sends."
+                        value={draftRule.communicationClass} options={communicationClassOptions}
+                        data-field="communicationClass" onchange={handleRuleChange}
+                        disabled={inputsDisabled}></lightning-combobox>
+                      <lightning-input type="toggle" label="Clinical priority"
+                        field-level-help="May override topic-level OptOut for clinical outreach; never bypasses hard stops."
+                        checked={draftRule.clinicalPriority} data-field="clinicalPriority" onchange={handleRuleChange}
+                        disabled={inputsDisabled}></lightning-input>
+                      <lightning-input type="toggle" label="Counts as outreach"
+                        field-level-help="When on, a digital send for this rule consumes weekly cooldown and holds PES."
+                        checked={draftRule.countsAsOutreach} data-field="countsAsOutreach" onchange={handleRuleChange}
+                        disabled={inputsDisabled}></lightning-input>
+                      <lightning-input type="toggle" label="Auto send email"
+                        field-level-help="Eligible for Prefetch daily Email when consent allows."
+                        checked={draftRule.autoSendEmail} data-field="autoSendEmail" onchange={handleRuleChange}
+                        disabled={inputsDisabled}></lightning-input>
+                      <lightning-input type="toggle" label="Auto send SMS"
+                        field-level-help="Eligible for Prefetch daily SMS when consent allows."
+                        checked={draftRule.autoSendSms} data-field="autoSendSms" onchange={handleRuleChange}
+                        disabled={inputsDisabled}></lightning-input>
+
+                      <lightning-combobox label="Cadence policy"
+                        field-level-help="Which Cadence Policy drives max attempts and attempt interval for this rule after outcomes are logged."
+                        value={draftRule.cadencePolicy} options={cadencePicklist} data-field="cadencePolicy"
+                        onchange={handleRuleChange}></lightning-combobox>
+                      <lightning-dual-listbox class="oc-dual" label="Served teams"
+                        field-level-help="MDM Team values (User.MDM_Team__c) allowed to work this rule via Omni skills. Leave both teams and roles empty to allow all. Saved as a semicolon-separated list; matching is case-insensitive."
+                        source-label="Available teams" selected-label="Selected teams" options={teamOptions}
+                        value={selectedTeams} onchange={handleServedTeamsChange}
+                        disabled={inputsDisabled}></lightning-dual-listbox>
+                      <lightning-dual-listbox class="oc-dual" label="Served roles"
+                        field-level-help="MDM Role values (User.MDM_Role__c) allowed to work this rule. Leave both teams and roles empty to allow all. Saved as a semicolon-separated list; matching is case-insensitive."
+                        source-label="Available roles" selected-label="Selected roles" options={roleOptions}
+                        value={selectedRoles} onchange={handleServedRolesChange}
+                        disabled={inputsDisabled}></lightning-dual-listbox>
+                      <lightning-dual-listbox class="oc-dual" label="Required appointment types"
+                        field-level-help="If set, evidence reconcile for Appointment Scheduled only accepts these Appointment Type values for this rule. Leave empty for no type filter. Saved semicolon-separated."
+                        source-label="Available types" selected-label="Required types" options={appointmentTypeOptions}
+                        value={selectedAppointmentTypes} onchange={handleAppointmentTypesChange}
+                        disabled={inputsDisabled}></lightning-dual-listbox>
+                      <lightning-input class="oc-field_span" label="Recommended action"
+                        field-level-help="Suggested next step shown to agents for this care item."
+                        value={draftRule.recommendedAction} data-field="recommendedAction"
+                        onchange={handleRuleChange}></lightning-input>
+                    </div>
+                    <div class="oc-actions">
+                      <lightning-button label="Save rule" variant="brand" onclick={saveSelectedRule}
+                        disabled={saveDisabled}></lightning-button>
+                    </div>
+                  </div>
+                </template>
+              </section>
+            </template>
+
+            <!-- CADENCE -->
+
+            <template if:true={isPreview}>
+              <section class="slds-box slds-m-around_medium">
+                <h2 class="slds-text-heading_small">Care item Email/SMS preview</h2>
+                <p class="slds-text-body_small slds-m-bottom_small">
+                  Search by patient name or SourceSystemId. Uses the same Haiku compose path as the Prefetch batch
+                  (skeleton fallback until Named Credential Outreach_Compose is wired).
+                </p>
+                <div class="slds-grid slds-gutters slds-m-bottom_small">
+                  <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="Name or SourceSystemId" value={previewQuery}
+                      onchange={handlePreviewQuery}></lightning-input>
+                    <lightning-button class="slds-m-top_x-small" label="Search" onclick={runPreviewSearch}
+                      disabled={previewLoading}></lightning-button>
+                    <ul class="slds-m-top_small">
+                      <template for:each={previewResults} for:item="row">
+                        <li key={row.accountId}>
+                          <button type="button" class="slds-button slds-button_neutral" data-id={row.accountId}
+                            onclick={handlePreviewAccountPick}>
+                            {row.name} · {row.sourceSystemId}
+                          </button>
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+                  <div class="slds-col slds-size_1-of-2">
+                    <lightning-combobox label="Rule" options={previewRuleOptions} value={previewRuleId}
+                      onchange={handlePreviewRuleChange}></lightning-combobox>
+                    <lightning-button class="slds-m-top_small" variant="brand" label="Preview compose"
+                      onclick={runCommPreview} disabled={previewLoading}></lightning-button>
+                  </div>
+                </div>
+                <template if:true={previewDto}>
+                  <p class="slds-text-body_small">
+                    Gates: Email {previewDto.emailReason} · SMS {previewDto.smsReason}
+                    · Counts as outreach: {previewDto.countsAsOutreach}
+                    · Auto send email: {previewDto.autoSendEmail}
+                    · Auto send SMS: {previewDto.autoSendSms}
+                  </p>
+                  <lightning-textarea label="Email subject" value={previewDto.emailSubject}
+                    readonly></lightning-textarea>
+                  <lightning-textarea label="Email body" value={previewDto.emailBody} readonly></lightning-textarea>
+                  <lightning-textarea label="SMS body" value={previewDto.smsBody} readonly></lightning-textarea>
+                </template>
+              </section>
+            </template>
+
+            <template if:true={isCadence}>
+              <section class="oc-panel">
+                <div class="oc-panel__head">
+                  <div>
+                    <h2 class="oc-panel__title">Cadence policies</h2>
+                    <p class="oc-panel__hint">
+                      Attempt caps and intervals used when logging outcomes.
+                    </p>
+                  </div>
+                </div>
+                <table class="oc-table">
+                  <thead>
+                    <tr>
+                      <th>Policy</th>
+                      <th>Max attempts</th>
+                      <th>Interval (days)</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template for:each={cadenceRows} for:item="row">
+                      <tr key={row.developerName}>
+                        <td>
+                          <strong>{row.masterLabel}</strong>
+                          <div class="slds-text-body_small slds-text-color_weak">
+                            {row.developerName}
+                          </div>
+                        </td>
+                        <td>{row.maxAttempts}</td>
+                        <td>{row.attemptIntervalDays}</td>
+                        <td class="oc-row-actions">
+                          <lightning-button label="Edit" data-id={row.developerName} onclick={selectCadence}
+                            variant="base"></lightning-button>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+                <template if:true={draftCadence}>
+                  <div class="oc-drawer">
+                    <h3 class="oc-panel__title">Edit {draftCadence.masterLabel}</h3>
+                    <div class="oc-grid oc-grid_3">
+                      <lightning-input type="number" label="Max attempts"
+                        field-level-help="Maximum outreach attempts before this cadence treats the care item as exhausted."
+                        value={draftCadence.maxAttempts} data-field="maxAttempts"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-input type="number" label="Attempt interval (days)"
+                        field-level-help="Minimum days between outreach attempts for care items using this policy."
+                        value={draftCadence.attemptIntervalDays} data-field="attemptIntervalDays"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-input type="number" label="Pause duration (days)"
+                        field-level-help="Days to pause outreach when a pause outcome applies under this policy."
+                        value={draftCadence.pauseDurationDays} data-field="pauseDurationDays"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-input type="number" label="Reopen window (hours)"
+                        field-level-help="Hours after close during which the episode can be reopened without starting a new cadence."
+                        value={draftCadence.reopenWindowHours} data-field="reopenWindowHours"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-input type="number" label="Close cooldown (hours)"
+                        field-level-help="Hours to wait after close before related outreach can start again."
+                        value={draftCadence.closeCooldownHours} data-field="closeCooldownHours"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-input type="toggle" label="Override snooze"
+                        field-level-help="When on, agents can place a new next-action date that overrides an existing snooze."
+                        checked={draftCadence.overrideSnooze} data-field="overrideSnooze"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-input type="toggle" label="Reset on promotion"
+                        field-level-help="When on, promoting the care item (for example urgency change) resets attempt counters for this cadence."
+                        checked={draftCadence.resetOnPromotion} data-field="resetOnPromotion"
+                        onchange={handleCadenceChange}></lightning-input>
+                      <lightning-textarea class="oc-field_span" label="Description"
+                        field-level-help="Admin notes describing when this cadence policy should be used."
+                        value={draftCadence.description} data-field="description"
+                        onchange={handleCadenceChange}></lightning-textarea>
+                    </div>
+                    <div class="oc-actions">
+                      <lightning-button label="Save cadence" variant="brand" onclick={saveSelectedCadence}
+                        disabled={saveDisabled}></lightning-button>
+                    </div>
+                  </div>
+                </template>
+              </section>
+            </template>
+
+            <!-- INTEGRATIONS -->
+            <template if:true={isIntegrations}>
+              <section class="oc-panel">
+                <div class="oc-panel__head">
+                  <div>
+                    <h2 class="oc-panel__title">RulesEngine</h2>
+                    <p class="oc-panel__hint">
+                      Decision project keys and batch size for eligibility /
+                      reaction graphs.
+                    </p>
+                  </div>
+                </div>
+                <template if:true={rulesEngine}>
+                  <div class="oc-grid">
+                    <lightning-input type="toggle" label="RulesEngine enabled"
+                      field-level-help="Master switch for RulesEngine BRMS calls used in surface/reaction decisions for outreach."
+                      checked={rulesEngine.enabled} data-field="enabled" onchange={handleRulesEngineChange}></lightning-input>
+                    <lightning-input type="number" label="Batch size"
+                      field-level-help="Max records sent per RulesEngine evaluation batch." value={rulesEngine.batchSize}
+                      data-field="batchSize" onchange={handleRulesEngineChange}></lightning-input>
+                    <lightning-input label="Project slug"
+                      field-level-help="RulesEngine project identifier used in API paths for this org."
+                      value={rulesEngine.projectSlug} data-field="projectSlug"
+                      onchange={handleRulesEngineChange}></lightning-input>
+                    <lightning-input label="Named credential"
+                      field-level-help="Salesforce Named Credential API name used for authenticated RulesEngine callouts."
+                      value={rulesEngine.namedCredential} data-field="namedCredential"
+                      onchange={handleRulesEngineChange}></lightning-input>
+                    <lightning-input label="Surface decision key"
+                      field-level-help="RulesEngine decision/service key for queue-surface evaluation."
+                      value={rulesEngine.surfaceDecisionKey} data-field="surfaceDecisionKey"
+                      onchange={handleRulesEngineChange}></lightning-input>
+                    <lightning-input label="Reaction decision key"
+                      field-level-help="RulesEngine decision/service key for post-outcome reaction (snooze, resolve, suppress)."
+                      value={rulesEngine.reactionDecisionKey} data-field="reactionDecisionKey"
+                      onchange={handleRulesEngineChange}></lightning-input>
+                  </div>
+                  <div class="oc-actions">
+                    <lightning-button label="Save RulesEngine" variant="brand" onclick={saveRulesEngine}
+                      disabled={saveDisabled}></lightning-button>
+                  </div>
+                </template>
+              </section>
+
+              <section class="oc-panel">
+                <div class="oc-panel__head">
+                  <div>
+                    <h2 class="oc-panel__title">Omni-Channel routing</h2>
+                    <p class="oc-panel__hint">
+                      Skill prefix and routing config used when Omni is enabled
+                      for Unclaimed episodes.
+                    </p>
+                  </div>
+                </div>
+                <template if:true={omni}>
+                  <div class="oc-grid">
+                    <lightning-input type="toggle" label="Omni routing enabled"
+                      field-level-help="Master switch for Omni-Channel skill routing driven by outreach rules."
+                      checked={omni.enabled} data-field="enabled" onchange={handleOmniChange}></lightning-input>
+                    <lightning-input label="Skill prefix"
+                      field-level-help="Prefix applied when generating Omni skill API names from outreach rule Ids."
+                      value={omni.skillPrefix} data-field="skillPrefix" onchange={handleOmniChange}></lightning-input>
+                    <lightning-input label="Service channel developer name"
+                      field-level-help="Omni Service Channel DeveloperName used for outreach work routing."
+                      value={omni.serviceChannelDeveloperName} data-field="serviceChannelDeveloperName"
+                      onchange={handleOmniChange}></lightning-input>
+                    <lightning-input label="Routing config developer name"
+                      field-level-help="Omni Routing Configuration DeveloperName used with outreach skills."
+                      value={omni.routingConfigDeveloperName} data-field="routingConfigDeveloperName"
+                      onchange={handleOmniChange}></lightning-input>
+                  </div>
+                  <div class="oc-actions">
+                    <lightning-button label="Save Omni" variant="brand" onclick={saveOmni}
+                      disabled={saveDisabled}></lightning-button>
+                  </div>
+                </template>
+              </section>
+            </template>
+          </div>
+        </div>
+      </template>
+    </template>
+  </div>
+</template>

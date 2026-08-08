@@ -1,0 +1,376 @@
+<template>
+  <div class="oi">
+    <template if:true={isLoading}
+      ><lightning-spinner
+        alternative-text="Loading outreach"
+        size="small"
+      ></lightning-spinner
+    ></template>
+    <template if:true={error}
+      ><div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+        {error}
+      </div></template
+    >
+
+    <template if:true={hasWorkspace}>
+      <article class={shellClass} aria-label="Actions and care gaps">
+        <div class={heroAccentClass}></div>
+        <div class="oi-shell__body">
+          <header class="oi-section oi-section_hero">
+            <div class="urgency-path" aria-label="Scheduling urgency">
+              <template for:each={pathStages} for:item="stage">
+                <div key={stage.key} class={stage.className}>{stage.label}</div>
+              </template>
+            </div>
+            <h2 class="oi-headline">{recommendedActionText}</h2>
+            <template if:true={hasSituationHtml}>
+              <div class="oi-situation-rich">
+                <lightning-formatted-rich-text
+                  value={situationHtml}
+                ></lightning-formatted-rich-text>
+              </div>
+            </template>
+          </header>
+
+          <section
+            class="oi-section oi-section_caregaps"
+            aria-label="Pending actions and care gaps"
+          >
+            <h3 class="oi-section__label">
+              Pending Actions &amp; Care Gaps ({needCount})
+            </h3>
+            <template if:true={hasNeeds}>
+              <div class="care-gap-grid" role="list">
+                <template for:each={careGapCards} for:item="need">
+                  <article key={need.id} class={need.cardClass} role="listitem">
+                    <div class={need.accentClass} aria-hidden="true"></div>
+                    <div class="care-gap__body">
+                      <button
+                        type="button"
+                        class="care-gap__select"
+                        data-need-id={need.id}
+                        onclick={handleNeedToggle}
+                        disabled={need.selectDisabled}
+                        aria-pressed={need.selected}
+                      >
+                        <div class="care-gap__header">
+                          <div class="care-gap__title-row">
+                            <lightning-icon
+                              icon-name={need.iconName}
+                              size="x-small"
+                              class="care-gap__icon"
+                              alternative-text=""
+                            ></lightning-icon>
+                            <strong class="care-gap__title">{need.title}</strong>
+                          </div>
+                          <span class={need.badgeClass}>{need.priorityLabel}</span>
+                        </div>
+                        <template if:true={need.whyText}
+                          ><p class="care-gap__why">{need.whyText}</p></template
+                        >
+                        <p class="care-gap__meta muted">
+                          {need.attemptLabel} · {need.dueLabel}
+                          <template if:true={need.isAddressed}
+                            > · Outcome logged</template
+                          >
+                          <template if:false={need.isAddressed}>
+                            <template if:true={need.selected}
+                              > · Included in outcome</template
+                            >
+                            <template if:false={need.selected}
+                              > · Not included</template
+                            >
+                          </template>
+                        </p>
+                        <template if:true={need.isSnoozed}>
+                          <p class="care-gap__snooze-banner">
+                            Snoozed until {need.snoozeUntilLabel}
+                          </p>
+                        </template>
+                      </button>
+                      <template if:true={need.force}
+                        ><lightning-input
+                          type="checkbox"
+                          label="I confirm this care item was addressed"
+                          data-need-id={need.id}
+                          checked={need.acked}
+                          onchange={handleForceAck}
+                          disabled={isCommentOnlyMode}
+                        ></lightning-input
+                      ></template>
+                      <template if:false={need.isAddressed}>
+                        <div class="care-gap__actions">
+                          <template if:true={need.isSnoozed}>
+                            <template if:false={need.showOverrideInline}>
+                              <button
+                                type="button"
+                                class="care-gap__link"
+                                data-need-id={need.id}
+                                onclick={openOverride}
+                              >
+                                Override
+                              </button>
+                            </template>
+                            <template if:true={need.showOverrideInline}>
+                              <div class="care-gap__override" data-need-id={need.id}>
+                                <lightning-input
+                                  type="date"
+                                  label="Snooze until"
+                                  value={overrideUntil}
+                                  min={overrideMinDate}
+                                  max={overrideMaxDate}
+                                  onchange={handleOverrideUntil}
+                                  required
+                                ></lightning-input>
+                                <div class="care-gap__override-actions">
+                                  <lightning-button
+                                    variant="brand"
+                                    label="Save"
+                                    onclick={confirmOverride}
+                                    disabled={isLoading}
+                                  ></lightning-button>
+                                  <lightning-button
+                                    variant="base"
+                                    label="Cancel"
+                                    onclick={cancelOverride}
+                                  ></lightning-button>
+                                </div>
+                              </div>
+                            </template>
+                          </template>
+                          <button
+                            type="button"
+                            class="care-gap__link"
+                            data-need-id={need.id}
+                            onclick={openSilence}
+                          >
+                            Silence
+                          </button>
+                        </div>
+                      </template>
+                    </div>
+                  </article>
+                </template>
+              </div>
+              <template if:true={hasMoreCareGaps}>
+                <div class="care-gap-more">
+                  <lightning-button
+                    variant="base"
+                    label={showAllGapsLabel}
+                    onclick={showAllGaps}
+                  ></lightning-button>
+                </div>
+              </template>
+              <p class="muted slds-m-top_x-small">
+                Care items are auto-selected. Uncheck any not completed on this
+                call. Addressed items are greyed out.
+              </p>
+            </template>
+            <template if:false={hasNeeds}
+              ><p class="muted">No active care gaps.</p></template
+            >
+            <template if:true={hasSilencedNeeds}>
+              <div class="slds-m-top_small">
+                <p class="oi-section__label">Silenced</p>
+                <template for:each={silencedNeeds} for:item="sn">
+                  <div key={sn.id} class="silence-row">
+                    <span>{sn.displayLabel}</span>
+                    <lightning-button
+                      variant="base"
+                      label="Unsilence"
+                      data-need-id={sn.id}
+                      onclick={handleUnsilence}
+                    ></lightning-button>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </section>
+
+          <section class={timelineSectionClass} aria-label="Care item history">
+            <div class="timeline-header">
+              <div class="timeline-header__title">
+                <h3 class="oi-section__label">Care item history</h3>
+                <template if:true={timelineExpanded}>
+                  <span class="history-view-pill">{historyModeLabel}</span>
+                </template>
+              </div>
+              <div class="timeline-header__actions">
+                <template if:true={timelineExpanded}>
+                  <lightning-input
+                    type="checkbox"
+                    label="Show Appointments"
+                    checked={showAppointments}
+                    onchange={handleShowAppointments}
+                    class="history-appt-toggle"
+                  ></lightning-input>
+                  <div class="history-view-toggle" role="group" aria-label="History grouping">
+                    <button
+                      type="button"
+                      class={chronoViewClass}
+                      onclick={setHistoryChrono}
+                    >Chronological</button>
+                    <button
+                      type="button"
+                      class={activityViewClass}
+                      onclick={setHistoryActivity}
+                    >Activity</button>
+                  </div>
+                </template>
+                <lightning-button
+                  variant="base"
+                  label={timelineToggleLabel}
+                  onclick={toggleTimeline}
+                ></lightning-button>
+              </div>
+            </div>
+            <template if:true={timelineExpanded}>
+              <template if:true={hasCareItemGroups}>
+                <template if:true={isChronoHistory}>
+                  <div class="care-history care-history_table" role="table" aria-label="Chronological outreach">
+                    <div class="care-history__cols care-history__cols_4" role="row">
+                      <span role="columnheader">Subject</span>
+                      <span role="columnheader">Status</span>
+                      <span role="columnheader">Comments</span>
+                      <span role="columnheader">Owner</span>
+                    </div>
+                    <template for:each={chronoSessions} for:item="row">
+                      <div key={row.key} class="care-history__row care-history__row_4" role="row">
+                        <div class="care-history__subject" role="cell">
+                          <span class={row.statusDotClass} aria-hidden="true"></span>
+                          <div>
+                            <strong class="care-history__subject-title">{row.summaryText}</strong>
+                            <p class="care-history__subject-sub muted">{row.subjectLabel}</p>
+                          </div>
+                        </div>
+                        <span class={row.statusTextClass} role="cell">{row.statusLabel}</span>
+                        <span
+                          class="care-history__comment"
+                          role="cell"
+                          title={row.commentFull}
+                        >{row.commentText}</span>
+                        <span class="care-history__owner" role="cell">{row.actorName}</span>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <template if:true={isActivityHistory}>
+                  <div class="care-history care-history_activity">
+                    <template for:each={activityGroups} for:item="group">
+                      <article key={group.key} class="care-history__item">
+                        <button
+                          type="button"
+                          class="care-history__accordion"
+                          data-key={group.key}
+                          onclick={toggleActivityGroup}
+                          aria-expanded={group.expanded}
+                        >
+                          <lightning-icon
+                            icon-name={group.chevronIcon}
+                            size="xx-small"
+                            alternative-text=""
+                          ></lightning-icon>
+                          <span class={group.statusDotClass} aria-hidden="true"></span>
+                          <strong class="care-history__title">{group.label}</strong>
+                          <span class="muted"
+                            >{group.countLabel} · Last {group.lastSeenLabel}</span
+                          >
+                        </button>
+                        <template if:true={group.expanded}>
+                          <ol class="care-history__events">
+                            <template for:each={group.events} for:item="event">
+                              <li key={event.id} class="care-history__event">
+                                <span class="care-history__when"
+                                  >{event.whenLabel}</span
+                                >
+                                <span class="care-history__summary"
+                                  >{event.summaryText}</span
+                                >
+                                <template if:true={event.actorName}
+                                  ><span class="muted"> · {event.actorName}</span></template
+                                >
+                              </li>
+                            </template>
+                          </ol>
+                        </template>
+                      </article>
+                    </template>
+                  </div>
+                </template>
+              </template>
+              <template if:false={hasCareItemGroups}
+                ><p class="muted">No care item history yet.</p></template
+              >
+            </template>
+          </section>
+        </div>
+      </article>
+    </template>
+
+    <template if:false={hasWorkspace}>
+      <template if:false={isLoading}>
+        <template if:false={error}>
+          <article class="oi-shell oi-shell_empty" aria-label="No active outreach">
+            <div class="oi-empty">
+              <span class="oi-empty__icon" aria-hidden="true">
+                <lightning-icon
+                  icon-name="standard:task2"
+                  size="small"
+                  alternative-text=""
+                ></lightning-icon>
+              </span>
+              <div class="oi-empty__copy">
+                <h3 class="oi-empty__title">No active outreach</h3>
+                <p class="oi-empty__body">
+                  No care gaps are queued for this patient. Open gaps from the
+                  nightly rule evaluation will show here with recommended
+                  actions.
+                </p>
+              </div>
+            </div>
+          </article>
+        </template>
+      </template>
+    </template>
+
+    <template if:true={showSilenceForm}>
+      <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-label="Silence care item">
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <h2 class="slds-modal__title">Silence care item</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+            <p class="muted">
+              Opt the patient out of future reminders for this care item.
+              A reason is required.
+            </p>
+            <lightning-textarea
+              class="slds-m-top_small"
+              label="Reason"
+              value={silenceReason}
+              onchange={handleSilenceReason}
+              required
+            ></lightning-textarea>
+            <lightning-input
+              class="slds-m-top_small"
+              type="date"
+              label="Optional expiry"
+              value={silenceExpiry}
+              onchange={handleSilenceExpiry}
+            ></lightning-input>
+          </div>
+          <footer class="slds-modal__footer">
+            <lightning-button label="Cancel" onclick={closeSilence}></lightning-button>
+            <lightning-button
+              variant="brand"
+              label="Silence"
+              onclick={saveSilence}
+              disabled={isLoading}
+            ></lightning-button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</div>
+</template>

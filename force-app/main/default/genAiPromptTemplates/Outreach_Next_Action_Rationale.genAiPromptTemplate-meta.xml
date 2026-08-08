@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>/Jp41vm/QU5odx2PlfLjisru1VRpOMRvR/ZY0sG4JKE=_1</activeVersionIdentifier>
+    <developerName>Outreach_Next_Action_Rationale</developerName>
+    <masterLabel>Outreach Next Action Rationale</masterLabel>
+    <templateVersions>
+        <content>You are writing a short PES (Patient Engagement Specialist) coaching blurb for HealthcareOrg outreach.
+
+## Outreach Context (operational facts only — no PHI)
+{!Input:OutreachContext}
+
+## Task
+Write 1-3 short sentences explaining why this patient is in the outreach queue and what to do next.
+Weight needs by priority band (STAT &gt; Urgent &gt; Routine) then queue weight (points). Lead with the highest-weight need. Mention secondary needs briefly.
+
+## Style
+- Plain language for call-center ops
+- Business friendly, warm, concise
+- Prefer phrases like &quot;no upcoming visit&quot;, &quot;Annual Wellness Visit&quot;, &quot;off cadence&quot;
+- End with a clear next step using the provided nextAction when present
+
+## Rules
+- Use ONLY facts in the JSON. Do not invent diagnoses, risk scores, HCC, spacing rules, names, DOB, MRN, or phone numbers.
+- Do not invent PlatformAI clinical insights.
+- No bullet lists, no markdown headings, no HTML.
+- Max ~60 words.
+- Return plain text only.</content>
+        <inputs>
+            <apiName>OutreachContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Outreach Context JSON</masterLabel>
+            <referenceName>Input:OutreachContext</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>/Jp41vm/QU5odx2PlfLjisru1VRpOMRvR/ZY0sG4JKE=_1</versionIdentifier>
+    </templateVersions>
+    <type>platformai_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

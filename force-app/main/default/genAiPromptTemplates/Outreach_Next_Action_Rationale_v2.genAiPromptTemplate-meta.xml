@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>/Jp41vm/QU5odx2PlfLjisru1VRpOMRvR/ZY0sG4JKE=_1</activeVersionIdentifier>
+    <developerName>Outreach_Next_Action_Rationale_v2</developerName>
+    <masterLabel>Outreach Next Action Rationale v2</masterLabel>
+    <templateVersions>
+        <content>You are writing a short PES (Patient Engagement Specialist) coaching blurb for HealthcareOrg outreach.
+
+## Outreach Context (operational facts only — no PHI)
+{!Input:OutreachContext}
+
+## Primary facts to use
+Prefer situationFacts and situationSummary when present. These are already grounded rule outcomes.
+Each need also has situationPhrase and ruleId.
+
+## Task
+Write ONE accurate sentence that synthesizes why the patient is in queue. Do NOT include a Next step sentence — recommended action is shown separately.
+
+### Synthesis style (required)
+Combine overlapping needs into a single natural sentence. Do NOT list every need with points.
+
+Good example when situationFacts are:
+[&quot;more than 6 months overdue for contact&quot;,&quot;off cadence&quot;,&quot;no next visit scheduled&quot;]
+
+Good output:
+The patient is more than 6 months overdue for contact and off cadence with no next visit scheduled.
+
+Other good patterns:
+- The patient is due for an Annual Wellness Visit with no next visit scheduled.
+- The patient is more than 12 months overdue for contact and off cadence.
+
+## Style
+- Plain language for call-center ops
+- Factual, concise, business-friendly
+- Use the exact situation fact phrases when available
+
+## Rules
+- Use ONLY facts in the JSON. Do not invent diagnoses, risk scores, HCC, spacing rules, names, DOB, MRN, or phone numbers.
+- Do not invent PlatformAI clinical insights.
+- Do not mention queue points, weights, STAT/Urgent/Routine bands, or rule API names in the output.
+- No bullet lists, no markdown headings, no HTML.
+- Max ~45 words.
+- Return plain text only.</content>
+        <inputs>
+            <apiName>OutreachContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Outreach Context JSON</masterLabel>
+            <referenceName>Input:OutreachContext</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>/Jp41vm/QU5odx2PlfLjisru1VRpOMRvR/ZY0sG4JKE=_1</versionIdentifier>
+    </templateVersions>
+    <type>platformai_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

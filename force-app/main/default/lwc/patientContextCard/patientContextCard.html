@@ -1,0 +1,42 @@
+<template>
+    <lightning-card title="Patient Summary" icon-name="standard:record">
+        <lightning-button-icon
+            slot="actions"
+            icon-name="utility:refresh"
+            alternative-text="Refresh"
+            onclick={handleRefresh}>
+        </lightning-button-icon>
+
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <!-- Loading State -->
+            <template lwc:if={isLoading}>
+                <div class="loading-state slds-p-around_medium slds-text-align_center">
+                    <lightning-spinner alternative-text="Generating insights..." size="small"></lightning-spinner>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">Analyzing patient history...</p>
+                </div>
+            </template>
+
+            <!-- Error State -->
+            <template lwc:elseif={hasError}>
+                <div class="error-state slds-p-around_small slds-text-align_center">
+                    <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                    <span class="slds-text-body_small">{errorMessage}</span>
+                </div>
+            </template>
+
+            <!-- Summary Display -->
+            <template lwc:elseif={hasData}>
+                <template lwc:if={hasSummary}>
+                    <div class="summary-content">
+                        <lightning-formatted-rich-text value={summaryHtml}></lightning-formatted-rich-text>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <div class="empty-state slds-p-around_small slds-text-align_center">
+                        <span class="slds-text-body_small slds-text-color_weak">No case history on file</span>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

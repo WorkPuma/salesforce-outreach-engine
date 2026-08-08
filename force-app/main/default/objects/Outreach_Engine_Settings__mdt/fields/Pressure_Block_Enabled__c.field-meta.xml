@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pressure_Block_Enabled__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>When true, patients at/above Pressure Block Threshold are held out of Unclaimed unless a care-item rule has Bypass Pressure Gate.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Pressure Block Enabled</label>
+    <type>Checkbox</type>
+</CustomField>

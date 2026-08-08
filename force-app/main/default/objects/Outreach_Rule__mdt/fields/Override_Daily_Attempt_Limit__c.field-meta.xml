@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Override_Daily_Attempt_Limit__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When true, allow more than one contact attempt per day for this rule.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Override Daily Attempt Limit</label>
+    <type>Checkbox</type>
+</CustomField>

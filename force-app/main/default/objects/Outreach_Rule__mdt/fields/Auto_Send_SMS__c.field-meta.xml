@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Auto_Send_SMS__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Eligible for Prefetch daily SMS when consent allows.</description>
+    <label>Auto Send SMS</label>
+    <type>Checkbox</type>
+</CustomField>

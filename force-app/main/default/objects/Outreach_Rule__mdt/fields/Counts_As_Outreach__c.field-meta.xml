@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Counts_As_Outreach__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When true, digital send consumes weekly human outreach cooldown / holds PES. Default false.</description>
+    <label>Counts As Outreach</label>
+    <type>Checkbox</type>
+</CustomField>

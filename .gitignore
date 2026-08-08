@@ -1,0 +1,5 @@
+.sfdx/
+node_modules/
+.vsix/
+tmp/
+*.log

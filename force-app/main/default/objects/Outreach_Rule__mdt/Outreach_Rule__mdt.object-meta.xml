@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Outreach Rule</label>
+    <pluralLabel>Outreach Rules</pluralLabel>
+    <description>DEV-4536: Declarative outreach need rules evaluated by the patient outreach engine.</description>
+    <visibility>Public</visibility>
+</CustomObject>

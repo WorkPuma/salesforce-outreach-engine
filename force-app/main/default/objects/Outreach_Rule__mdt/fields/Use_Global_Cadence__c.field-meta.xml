@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Use_Global_Cadence__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>When true, cadence knobs hydrate from Outreach_Engine_Settings / DEFAULT_WEEKLY on publish.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Use Global Cadence</label>
+    <type>Checkbox</type>
+</CustomField>

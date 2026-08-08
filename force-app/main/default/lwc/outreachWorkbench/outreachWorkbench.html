@@ -1,0 +1,205 @@
+<template>
+  <div class="ow">
+    <div class="ow-filters">
+      <template if:true={canSupervise}>
+        <lightning-combobox
+          class="ow-filter"
+          label="Mode"
+          value={modeValue}
+          options={modeOptions}
+          onchange={handleModeChange}
+        ></lightning-combobox>
+      </template>
+      <lightning-combobox
+        class="ow-filter"
+        label="Priority"
+        value={priorityFilter}
+        options={priorityOptions}
+        onchange={handlePriorityChange}
+      ></lightning-combobox>
+      <div class="ow-filters__actions">
+        <lightning-button
+          label="Refresh"
+          icon-name="utility:refresh"
+          onclick={handleRefresh}
+          disabled={isLoading}
+        ></lightning-button>
+      </div>
+    </div>
+
+    <template if:true={isLoading}>
+      <lightning-spinner
+        alternative-text="Loading queue"
+        size="small"
+      ></lightning-spinner>
+    </template>
+
+    <template if:true={error}>
+      <div
+        class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small"
+        role="alert"
+      >
+        {error}
+      </div>
+    </template>
+
+    <section class="ow-kpi-row" aria-label="Care item summary">
+      <template for:each={kpis} for:item="kpi">
+        <article key={kpi.key} class="ow-kpi">
+          <div class="ow-kpi__count">{kpi.patientCount}</div>
+          <div class="ow-kpi__label">{kpi.label}</div>
+        </article>
+      </template>
+      <article class="ow-kpi ow-kpi_chart" aria-label="Priority load">
+        <div class="ow-donut" style={donutStyle}>
+          <div class="ow-donut__hole">
+            <span class="ow-donut__pct">{priorityPercentLabel}</span>
+          </div>
+        </div>
+        <div class="ow-donut__meta">
+          <div class="ow-kpi__label">Priority load</div>
+          <ul class="ow-legend">
+            <li>
+              <span class="ow-swatch ow-swatch_urgent"></span>
+              Urgent
+            </li>
+            <li>
+              <span class="ow-swatch ow-swatch_routine"></span>
+              Routine
+            </li>
+          </ul>
+        </div>
+      </article>
+    </section>
+
+    <div class="ow-panels">
+      <section class="ow-panel" aria-label="Recently worked">
+        <header class="ow-panel__header">
+          <div class="ow-panel__title">
+            <lightning-icon
+              icon-name="utility:clock"
+              size="xx-small"
+              alternative-text=""
+            ></lightning-icon>
+            <h2>Recently worked</h2>
+          </div>
+        </header>
+        <template if:true={hasWorked}>
+          <table class="ow-table">
+            <thead>
+              <tr>
+                <th scope="col">Patient</th>
+                <th scope="col" class="ow-col-status">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template for:each={recentlyWorked} for:item="row">
+                <tr key={row.episodeId}>
+                  <td>
+                    <button
+                      type="button"
+                      class="ow-patient-link"
+                      data-account-id={row.accountId}
+                      data-episode-id={row.episodeId}
+                      data-status={row.status}
+                      onclick={handleOpenClick}
+                    >
+                      {row.patientName}
+                    </button>
+                    <div class="ow-sub">{row.needsSummary}</div>
+                  </td>
+                  <td class="ow-col-status">
+                    <span class={row.statusClass}>{row.status}</span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </template>
+        <template if:false={hasWorked}>
+          <template if:false={isLoading}>
+            <div class="ow-empty">No recently worked patients.</div>
+          </template>
+        </template>
+      </section>
+
+      <section class="ow-panel" aria-label="Queue">
+        <header class="ow-panel__header">
+          <div class="ow-panel__title">
+            <h2>Queue</h2>
+            <span class="ow-priority-chip">Priority</span>
+          </div>
+          <template if:true={hasMoreUnclaimed}>
+            <button
+              type="button"
+              class="ow-view-all"
+              onclick={handleViewAll}
+            >
+              View All
+            </button>
+          </template>
+        </header>
+        <template if:true={hasUnclaimed}>
+          <table class="ow-table ow-table_unclaimed">
+            <thead>
+              <tr>
+                <th scope="col" class="ow-col-actions">Actions</th>
+                <th scope="col">Patient</th>
+                <th scope="col" class="ow-col-priority">Priority</th>
+                <th scope="col">Care Gaps</th>
+                <th scope="col" class="ow-col-due">Due Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template for:each={visibleUnclaimed} for:item="row">
+                <tr key={row.episodeId}>
+                  <td class="ow-col-actions">
+                    <lightning-button
+                      label="Open"
+                      variant="brand"
+                      data-account-id={row.accountId}
+                      data-episode-id={row.episodeId}
+                      data-status={row.status}
+                      onclick={handleOpenClick}
+                      disabled={isLoading}
+                    ></lightning-button>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="ow-patient-link"
+                      data-account-id={row.accountId}
+                      data-episode-id={row.episodeId}
+                      data-status={row.status}
+                      onclick={handleOpenClick}
+                    >
+                      {row.patientName}
+                    </button>
+                  </td>
+                  <td class="ow-col-priority">
+                    <span class={row.priorityClass}>{row.priorityLabel}</span>
+                  </td>
+                  <td>
+                    <div class="ow-gaps">
+                      <template for:each={row.gapBadges} for:item="gap">
+                        <span key={gap.key} class={gap.className}
+                          >{gap.label}</span
+                        >
+                      </template>
+                    </div>
+                  </td>
+                  <td class="ow-col-due">{row.dueDateLabel}</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </template>
+        <template if:false={hasUnclaimed}>
+          <template if:false={isLoading}>
+            <div class="ow-empty">No unclaimed patients in the queue.</div>
+          </template>
+        </template>
+      </section>
+    </div>
+  </div>
+</template>

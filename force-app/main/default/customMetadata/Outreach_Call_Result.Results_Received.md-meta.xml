@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Results Received</label>
+    <protected>false</protected>
+    <values><field>Enabled__c</field><value xsi:type="xsd:boolean">true</value></values>
+    <values><field>Sort_Order__c</field><value xsi:type="xsd:double">120</value></values>
+    <values><field>Lifecycle__c</field><value xsi:type="xsd:string">Completed</value></values>
+    <values><field>Event_Type__c</field><value xsi:type="xsd:string">Attempt Made</value></values>
+    <values><field>Show_On_Timeline__c</field><value xsi:type="xsd:boolean">true</value></values>
+    <values><field>Requires_Evidence__c</field><value xsi:type="xsd:boolean">false</value></values>
+    <values><field>Evidence_Kind__c</field><value xsi:type="xsd:string">None</value></values>
+    <values><field>Closes_Care_Item__c</field><value xsi:type="xsd:boolean">true</value></values>
+    <values><field>Snoozes__c</field><value xsi:type="xsd:boolean">false</value></values>
+</CustomMetadata>

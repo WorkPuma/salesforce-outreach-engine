@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Clinical_Priority__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>May override topic OptOut only; never hard stops (STOP, AI_Outreach opt-out, DNC, full silence).</description>
+    <label>Clinical Priority</label>
+    <type>Checkbox</type>
+</CustomField>

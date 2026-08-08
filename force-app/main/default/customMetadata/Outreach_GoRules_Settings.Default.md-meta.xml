@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Default</label>
+    <protected>false</protected>
+    <values><field>Enabled__c</field><value xsi:type="xsd:boolean">true</value></values>
+    <values><field>Project_Slug__c</field><value xsi:type="xsd:string">patient-outreach</value></values>
+    <values><field>Surface_Decision_Key__c</field><value xsi:type="xsd:string">outreach-surface</value></values>
+    <values><field>Reaction_Decision_Key__c</field><value xsi:type="xsd:string">outreach-reaction</value></values>
+    <values><field>Named_Credential__c</field><value xsi:type="xsd:string">RulesEngine_Agent</value></values>
+    <values><field>Batch_Size__c</field><value xsi:type="xsd:double">20.0</value></values>
+</CustomMetadata>

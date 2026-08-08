@@ -1,0 +1,227 @@
+<template>
+  <div class="oi-outcome">
+    <template if:true={isLoading}
+      ><lightning-spinner
+        alternative-text="Loading outreach"
+        size="small"
+      ></lightning-spinner
+    ></template>
+    <template if:true={error}
+      ><div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+        {error}
+      </div></template
+    >
+
+    <template if:true={hasWorkspace}>
+      <article class="oi-outcome__card" aria-label="Log outcome">
+        <header class="oi-outcome__header">
+          <h3 class="oi-outcome__title">{outcomeSectionLabel}</h3>
+          <p class="oi-outcome__hint muted">{selectionHint}</p>
+        </header>
+
+        <template if:true={cooldownBanner}
+          ><div class="cooldown-banner" role="status">
+            {cooldownBanner}
+          </div></template
+        >
+
+        <template if:true={hasRecentComments}>
+          <section class="oi-comments" aria-label="Recent comments">
+            <h4 class="oi-comments__title">Comments (last 30 days)</h4>
+            <ul class="oi-comments__list">
+              <template for:each={visibleComments} for:item="c">
+                <li key={c.id} class="oi-comments__item">
+                  <div class="oi-comments__meta muted">{c.whenLabel} · {c.metaLabel}</div>
+                  <p class="oi-comments__body" title={c.detail}>{c.detail}</p>
+                </li>
+              </template>
+            </ul>
+            <template if:true={hasMoreComments}>
+              <lightning-button
+                variant="base"
+                label="Show more comments"
+                onclick={expandComments}
+              ></lightning-button>
+            </template>
+          </section>
+        </template>
+
+        <template if:true={isCommentOnlyMode}>
+          <lightning-textarea
+            label="Comments"
+            value={detail}
+            onchange={handleDetailChange}
+            required
+          ></lightning-textarea>
+          <div class="oi-outcome__footer">
+            <lightning-button
+              variant="brand"
+              label="Save comment"
+              onclick={saveOutcome}
+              disabled={isLoading}
+            ></lightning-button>
+          </div>
+        </template>
+
+        <template if:false={isCommentOnlyMode}>
+          <div class="outcome-fields">
+            <lightning-combobox
+              label="Call Result"
+              value={outcome}
+              options={outcomeOptions}
+              onchange={handleOutcomeChange}
+            ></lightning-combobox>
+            <template if:true={showInactiveReason}
+              ><lightning-combobox
+                class="slds-m-top_small"
+                label="Inactive reason"
+                value={inactiveReason}
+                options={inactiveReasonOptions}
+                onchange={handleInactiveReason}
+                required
+              ></lightning-combobox
+            ></template>
+            <template if:true={showDeceasedConfirm}
+              ><lightning-input
+                class="slds-m-top_small"
+                type="checkbox"
+                label="I confirm this patient is deceased"
+                checked={confirmDeceased}
+                onchange={handleConfirmDeceased}
+                required
+              ></lightning-input
+            ></template>
+            <lightning-combobox
+              class="slds-m-top_small"
+              label="Channel"
+              value={channel}
+              options={channelOptions}
+              onchange={handleChannelChange}
+            ></lightning-combobox>
+            <lightning-input
+              class="slds-m-top_small"
+              type="checkbox"
+              label="Keep working this patient"
+              field-level-help="Leave checked to keep a soft hold after saving. Unchecked (default) returns the patient to the shared team queue."
+              checked={keepWorking}
+              onchange={handleKeepWorking}
+            ></lightning-input>
+            <div class="oi-outcome__footer">
+              <button
+                type="button"
+                class="slds-button slds-button_neutral"
+                data-id="outreach-snooze"
+                onclick={openSnoozeDialog}
+                disabled={isSnoozeDisabled}
+              >
+                Snooze
+              </button>
+              <lightning-button
+                variant="brand"
+                label="Save"
+                onclick={saveOutcome}
+                disabled={isLoading}
+              ></lightning-button>
+            </div>
+            <lightning-textarea
+              class="oi-outcome__comments"
+              label="Comments"
+              value={detail}
+              onchange={handleDetailChange}
+            ></lightning-textarea>
+          </div>
+        </template>
+      </article>
+    </template>
+
+    <template if:false={hasWorkspace}>
+      <template if:false={isLoading}>
+        <template if:false={error}>
+          <article
+            class="oi-outcome__card oi-outcome__card_empty"
+            aria-label="No active outreach"
+          >
+            <div class="oi-empty">
+              <span class="oi-empty__icon" aria-hidden="true">
+                <lightning-icon
+                  icon-name="standard:live_chat"
+                  size="small"
+                  alternative-text=""
+                ></lightning-icon>
+              </span>
+              <div class="oi-empty__copy">
+                <h3 class="oi-empty__title">No active outreach</h3>
+                <p class="oi-empty__body">
+                  This patient has no open care gaps to work right now. When
+                  nightly evaluation finds a matching need, it will appear here
+                  so you can log the outcome.
+                </p>
+              </div>
+            </div>
+          </article>
+        </template>
+      </template>
+    </template>
+
+    <template if:true={showSnoozeDialog}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        class="slds-modal slds-fade-in-open snooze-modal"
+      >
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <h2 class="slds-modal__title">Snooze selected care items</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+            <p class="slds-m-bottom_small">
+              These linked items will be snoozed:
+              <strong>{snoozeConfirmSummary}</strong>
+            </p>
+            <div
+              class="snooze-presets"
+              role="group"
+              aria-label="Snooze duration"
+            >
+              <template for:each={snoozePresetOptions} for:item="preset">
+                <lightning-button
+                  key={preset.label}
+                  label={preset.label}
+                  data-days={preset.days}
+                  onclick={handleSnoozePreset}
+                  class="snooze-presets__btn"
+                ></lightning-button>
+              </template>
+            </div>
+            <lightning-input
+              class="slds-m-top_small"
+              type="date"
+              label="Snooze until"
+              value={snoozeUntil}
+              onchange={handleSnoozeUntil}
+              required
+            ></lightning-input>
+            <p class="muted slds-m-top_x-small">
+              Saving snooze also logs this outreach. One patient stays out of
+              the shared queue for a week after contact unless a rule has the
+              weekly cooldown override (minimum 1 day).
+            </p>
+          </div>
+          <footer class="slds-modal__footer">
+            <lightning-button
+              label="Cancel"
+              onclick={cancelSnoozeDialog}
+            ></lightning-button>
+            <lightning-button
+              variant="brand"
+              label="Snooze &amp; Save"
+              onclick={confirmSnoozeAndSave}
+              disabled={isLoading}
+            ></lightning-button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+  </div>
+</template>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AI_Outreach_Eligible__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When true, AI_Outreach AI may dial open care items for this rule (AWV / No Next follow-up). Unengaged and other rules stay false.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>AI_Outreach Eligible</label>
+    <type>Checkbox</type>
+</CustomField>

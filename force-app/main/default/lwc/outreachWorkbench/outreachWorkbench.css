@@ -1,0 +1,328 @@
+:host {
+  --ow-urgent: #ba0517;
+  --ow-urgent-text: #ba0517;
+  --ow-routine: #90caf9;
+  --ow-routine-deep: #0176d3;
+  --ow-chip: #c23934;
+  --ow-surface: #ffffff;
+  --ow-bg: #f3f3f3;
+  --ow-border: #e5e5e5;
+  --ow-text: #181818;
+  --ow-muted: #706e6b;
+  --ow-awv-bg: #fce5cd;
+  --ow-awv-text: #8c4b02;
+  --ow-multi-bg: #f9e5d3;
+  --ow-multi-text: #8c4b02;
+  --ow-off-bg: #f3f3f3;
+  --ow-off-text: #444;
+  --ow-snooze-bg: #e5e5e5;
+  --ow-radius: 0.5rem;
+  display: block;
+  color: var(--ow-text);
+}
+
+.ow {
+  padding: 0.75rem 1rem 1.25rem;
+  background: var(--ow-bg);
+  min-height: 100%;
+}
+
+
+.ow-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+.ow-filter {
+  min-width: 11rem;
+  max-width: 14rem;
+}
+.ow-filters__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+.ow-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(11rem, 1.2fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.ow-kpi {
+  background: var(--ow-surface);
+  border: 1px solid var(--ow-border);
+  border-radius: var(--ow-radius);
+  padding: 0.85rem 0.75rem;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.ow-kpi__count {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.ow-kpi__label {
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ow-muted);
+}
+.ow-kpi_chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+}
+
+.ow-donut {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: conic-gradient(
+    var(--ow-routine-deep) 0 var(--ow-urgent-deg, 0deg),
+    var(--ow-routine) var(--ow-urgent-deg, 0deg) 360deg
+  );
+}
+.ow-donut__hole {
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 50%;
+  background: var(--ow-surface);
+  display: grid;
+  place-items: center;
+}
+.ow-donut__pct {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.ow-donut__meta .ow-kpi__label {
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+}
+.ow-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--ow-muted);
+}
+.ow-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+.ow-swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  display: inline-block;
+}
+.ow-swatch_urgent {
+  background: var(--ow-routine-deep);
+}
+.ow-swatch_routine {
+  background: var(--ow-routine);
+}
+
+.ow-panels {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 0.85rem;
+  align-items: start;
+}
+.ow-panel {
+  background: var(--ow-surface);
+  border: 1px solid var(--ow-border);
+  border-radius: var(--ow-radius);
+  padding: 0.65rem 0.75rem 0.85rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  min-width: 0;
+}
+.ow-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--ow-border);
+}
+.ow-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ow-panel__title h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.ow-priority-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.25rem;
+  background: var(--ow-chip);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ow-view-all {
+  border: 0;
+  background: transparent;
+  color: var(--ow-routine-deep);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ow-view-all:hover {
+  text-decoration: underline;
+}
+
+.ow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.ow-table th {
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ow-muted);
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--ow-border);
+}
+.ow-table td {
+  padding: 0.55rem 0.4rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ow-table tr:last-child td {
+  border-bottom: 0;
+}
+.ow-col-actions {
+  width: 5.5rem;
+}
+.ow-col-priority {
+  width: 6.5rem;
+}
+.ow-col-due {
+  width: 7rem;
+  white-space: nowrap;
+}
+.ow-col-status {
+  width: 6.5rem;
+  text-align: right;
+}
+
+.ow-patient-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ow-routine-deep);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.ow-patient-link:hover {
+  text-decoration: underline;
+}
+.ow-sub {
+  margin-top: 0.1rem;
+  color: var(--ow-muted);
+  font-size: 0.75rem;
+}
+
+.ow-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--ow-snooze-bg);
+  color: #3e3e3c;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.ow-status_snoozed {
+  background: #e5e5e5;
+}
+.ow-status_claimed {
+  background: #eef4ff;
+  color: var(--ow-routine-deep);
+}
+
+.ow-priority {
+  font-weight: 700;
+}
+.ow-priority_urgent,
+.ow-priority_stat {
+  color: var(--ow-urgent-text);
+}
+.ow-priority_routine {
+  color: var(--ow-muted);
+}
+
+.ow-gaps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.ow-gap {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ow-gap_awv {
+  background: var(--ow-awv-bg);
+  color: var(--ow-awv-text);
+}
+.ow-gap_multi {
+  background: var(--ow-multi-bg);
+  color: var(--ow-multi-text);
+}
+.ow-gap_off {
+  background: var(--ow-off-bg);
+  color: var(--ow-off-text);
+}
+.ow-gap_default {
+  background: #eef4ff;
+  color: var(--ow-routine-deep);
+}
+
+.ow-empty {
+  color: var(--ow-muted);
+  padding: 0.75rem 0.25rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 64rem) {
+  .ow-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ow-kpi_chart {
+    grid-column: 1 / -1;
+  }
+  .ow-panels {
+    grid-template-columns: 1fr;
+  }
+}

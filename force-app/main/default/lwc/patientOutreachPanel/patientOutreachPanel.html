@@ -1,0 +1,333 @@
+<template>
+  <div class="oi">
+    <template if:true={isLoading}
+      ><lightning-spinner
+        alternative-text="Loading outreach"
+        size="small"
+      ></lightning-spinner
+    ></template>
+    <template if:true={error}
+      ><div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+        {error}
+      </div></template
+    >
+
+    <template if:true={hasWorkspace}>
+      <article class={shellClass} aria-label="Outreach intelligence">
+        <div class={heroAccentClass}></div>
+        <div class="oi-shell__body">
+          <header class="oi-section oi-section_hero">
+            <div class="urgency-path" aria-label="Scheduling urgency">
+              <template for:each={pathStages} for:item="stage">
+                <div key={stage.label} class={stage.className}>{stage.label}</div>
+              </template>
+            </div>
+            <p class="oi-rationale">{displayRationale}</p>
+            <ul class="oi-pills">
+              <template for:each={focusChips} for:item="chip">
+                <li key={chip.key} class={chip.className}>{chip.label}</li>
+              </template>
+            </ul>
+            <ul class="oi-pills oi-pills_consent" aria-label="Communication opt-outs">
+              <template for:each={consentChips} for:item="chip">
+                <li key={chip.key} class={chip.className} title={chip.title}>{chip.label}</li>
+              </template>
+            </ul>
+            <div class="oi-action-row">
+              <p class={actionTextClass}>{recommendedActionText}</p>
+              <template if:true={actionDescriptionText}
+                ><p class="muted">{actionDescriptionText}</p></template
+              >
+              <p class="muted">
+                Due
+                <lightning-formatted-date-time
+                  value={workspace.nextActionDate}
+                  time-zone="UTC"
+                ></lightning-formatted-date-time>
+                · {workspace.status} · {workspace.ownerName}
+              </p>
+            </div>
+          </header>
+
+          <div class="oi-section oi-section_work">
+            <div class="work-grid">
+              <div class="work-col work-col_needs">
+                <h3 class="oi-section__label">Active needs ({needCount})</h3>
+                <template if:true={hasNeeds}>
+                  <div class="need-grid">
+                    <template for:each={needTiles} for:item="need">
+                      <article key={need.id} class={need.tileClass}>
+                        <button
+                          type="button"
+                          class="need-tile__select"
+                          data-need-id={need.id}
+                          onclick={handleNeedToggle}
+                          disabled={isCommentOnlyMode}
+                        >
+                          <div class="need-tile__top">
+                            <strong class={need.intensityClass}
+                              >{need.title}</strong
+                            >
+                            <span class={need.priorityClass}
+                              >{need.priority}</span
+                            >
+                          </div>
+                          <p class="muted">
+                            <template if:true={need.attemptCount}
+                              >{need.attemptCount} attempts</template
+                            >
+                            <template if:false={need.attemptCount}
+                              >No attempts yet</template
+                            >
+                          </p>
+                          <p class="need-tile__check">
+                            <template if:true={need.selected}
+                              >Included in outcome</template
+                            >
+                            <template if:false={need.selected}
+                              >Not included</template
+                            >
+                          </p>
+                        </button>
+                        <template if:true={need.force}
+                          ><lightning-input
+                            type="checkbox"
+                            label="I confirm this need was addressed"
+                            data-need-id={need.id}
+                            checked={need.acked}
+                            onchange={handleForceAck}
+                            disabled={isCommentOnlyMode}
+                          ></lightning-input
+                        ></template>
+                        <div class="need-tile__links">
+                          <lightning-button
+                            variant="base"
+                            label="Silence"
+                            data-need-id={need.id}
+                            onclick={openSilence}
+                          ></lightning-button>
+                        </div>
+                      </article>
+                    </template>
+                  </div>
+                  <p class="muted slds-m-top_x-small">
+                    Needs are auto-selected. Uncheck any not completed on this
+                    call.
+                  </p>
+                </template>
+                <template if:false={hasNeeds}
+                  ><p class="muted">No active outreach needs.</p></template
+                >
+                <template if:true={hasShadowNeeds}
+                  ><p class="muted slds-m-top_small">
+                    Shadow context (not in queue):
+                    <template for:each={shadowNeeds} for:item="sn">
+                      <span key={sn.id}>{sn.displayLabel} </span>
+                    </template>
+                  </p></template
+                >
+                <template if:true={hasSilencedNeeds}>
+                  <div class="slds-m-top_small">
+                    <p class="oi-section__label">Silenced</p>
+                    <template for:each={silencedNeeds} for:item="sn">
+                      <div key={sn.id} class="silence-row">
+                        <span>{sn.displayLabel}</span>
+                        <lightning-button
+                          variant="base"
+                          label="Unsilence"
+                          data-need-id={sn.id}
+                          onclick={handleUnsilence}
+                        ></lightning-button>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+
+              <div class="work-col work-col_outcome">
+                <h3 class="oi-section__label">{outcomeSectionLabel}</h3>
+                <template if:true={cooldownBanner}
+                  ><div class="cooldown-banner" role="status">
+                    {cooldownBanner}
+                  </div></template
+                >
+
+                <template if:true={isCommentOnlyMode}>
+                  <lightning-textarea
+                    label="Comment"
+                    value={detail}
+                    onchange={handleDetailChange}
+                    required
+                  ></lightning-textarea>
+                  <div class="slds-m-top_medium">
+                    <lightning-button
+                      variant="brand"
+                      label="Save comment"
+                      onclick={saveOutcome}
+                      disabled={isLoading}
+                    ></lightning-button>
+                  </div>
+                </template>
+
+                <template if:false={isCommentOnlyMode}>
+                  <div class="outcome-fields">
+                    <lightning-combobox
+                      label="Outcome"
+                      value={outcome}
+                      options={outcomeOptions}
+                      onchange={handleOutcomeChange}
+                    ></lightning-combobox>
+                    <template if:true={showInactiveReason}
+                      ><lightning-combobox
+                        class="slds-m-top_small"
+                        label="Inactive reason"
+                        value={inactiveReason}
+                        options={inactiveReasonOptions}
+                        onchange={handleInactiveReason}
+                        required
+                      ></lightning-combobox
+                    ></template>
+                    <template if:true={showDeceasedConfirm}
+                      ><lightning-input
+                        class="slds-m-top_small"
+                        type="checkbox"
+                        label="I confirm this patient is deceased"
+                        checked={confirmDeceased}
+                        onchange={handleConfirmDeceased}
+                        required
+                      ></lightning-input
+                    ></template>
+                    <lightning-combobox
+                      class="slds-m-top_small"
+                      label="Channel"
+                      value={channel}
+                      options={channelOptions}
+                      onchange={handleChannelChange}
+                    ></lightning-combobox>
+                    <template if:true={isSnoozedOutcome}
+                      ><lightning-input
+                        class="slds-m-top_small"
+                        type="date"
+                        label="Snooze until"
+                        value={snoozeUntil}
+                        onchange={handleSnoozeUntil}
+                        required
+                      ></lightning-input
+                    ></template>
+                    <lightning-textarea
+                      class="slds-m-top_small"
+                      label="Comment"
+                      value={detail}
+                      onchange={handleDetailChange}
+                    ></lightning-textarea>
+                    <lightning-input
+                      class="slds-m-top_small"
+                      type="checkbox"
+                      label="Keep working this patient"
+                      field-level-help="Leave checked to keep a soft hold after saving. Unchecked (default) returns the patient to the shared team queue."
+                      checked={keepWorking}
+                      onchange={handleKeepWorking}
+                    ></lightning-input>
+                    <lightning-input
+                      class="slds-m-top_small"
+                      type="checkbox"
+                      label="Resolve selected needs with this outcome"
+                      checked={closeRelated}
+                      onchange={handleCloseRelated}
+                    ></lightning-input>
+                    <div class="slds-m-top_medium">
+                      <lightning-button
+                        variant="brand"
+                        label="Save outcome"
+                        onclick={saveOutcome}
+                        disabled={isLoading}
+                      ></lightning-button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <section class="oi-section oi-section_timeline" aria-label="Recent outreach events">
+            <h3 class="oi-section__label">Recent outreach events</h3>
+            <template if:true={hasTimelineEvents}>
+              <ol class="timeline">
+                <template for:each={timelineEvents} for:item="event">
+                  <li key={event.id} class={event.itemClass}>
+                    <div class="timeline__rail" aria-hidden="true">
+                      <span class={event.nodeClass}></span>
+                    </div>
+                    <div class="timeline__body">
+                      <div class="timeline__meta">
+                        <span class={event.typeClass}>{event.eventType}</span>
+                        <template if:true={event.outcome}
+                          ><span class="timeline__outcome"
+                            >{event.outcome}</span
+                          ></template
+                        >
+                        <span class="timeline__when">{event.whenLabel}</span>
+                      </div>
+                      <template if:true={event.detail}
+                        ><p class="timeline__detail">{event.detail}</p></template
+                      >
+                      <template if:true={event.inactiveReason}
+                        ><p class="timeline__detail muted">
+                          Inactive reason: {event.inactiveReason}
+                        </p></template
+                      >
+                      <p class="timeline__actor muted">{event.actorName}</p>
+                    </div>
+                  </li>
+                </template>
+              </ol>
+            </template>
+            <template if:false={hasTimelineEvents}
+              ><p class="muted">No outreach events yet.</p></template
+            >
+          </section>
+        </div>
+      </article>
+    </template>
+
+    <template if:true={showSilenceForm}>
+      <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-label="Silence need">
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <h2 class="slds-modal__title">Silence care item</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+            <p class="muted">
+              Opt the patient out of future reminders for this care item.
+              A reason is required.
+            </p>
+            <lightning-textarea
+              class="slds-m-top_small"
+              label="Reason"
+              value={silenceReason}
+              onchange={handleSilenceReason}
+              required
+            ></lightning-textarea>
+            <lightning-input
+              class="slds-m-top_small"
+              type="date"
+              label="Optional expiry"
+              value={silenceExpiry}
+              onchange={handleSilenceExpiry}
+            ></lightning-input>
+          </div>
+          <footer class="slds-modal__footer">
+            <lightning-button label="Cancel" onclick={closeSilence}></lightning-button>
+            <lightning-button
+              variant="brand"
+              label="Silence"
+              onclick={saveSilence}
+              disabled={isLoading}
+            ></lightning-button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+  </div>
+</template>

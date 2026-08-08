@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Bypass_Pressure_Gate__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When true, this care item may enter the Unclaimed queue even if Account Pressure_Score is at/above the block threshold. May shorten weekly cooldown to 1 day; still once-per-day contact max.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Bypass Pressure Gate</label>
+    <type>Checkbox</type>
+</CustomField>

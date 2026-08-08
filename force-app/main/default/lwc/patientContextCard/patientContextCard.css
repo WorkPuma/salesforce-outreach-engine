@@ -1,0 +1,54 @@
+/* Patient Summary Card - Matches Active Programs styling */
+
+/* Loading state */
+.loading-state {
+    color: var(--slds-g-color-neutral-base-50, #706e6b);
+}
+
+/* Error state */
+.error-state {
+    background-color: var(--slds-g-color-error-base-95, #fef1ee);
+    border-radius: var(--slds-g-radius-border-1, 0.25rem);
+    color: var(--slds-g-color-error-base-40, #ba0517);
+}
+
+/* Empty state */
+.empty-state {
+    color: var(--slds-g-color-neutral-base-50, #706e6b);
+}
+
+/* Summary content styling */
+.summary-content {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--slds-g-color-neutral-base-10, #181818);
+}
+
+/* Style the rich text list output */
+.summary-content lightning-formatted-rich-text ul,
+.summary-content ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: disc;
+}
+
+.summary-content lightning-formatted-rich-text li,
+.summary-content li {
+    margin-bottom: 0.625rem;
+    padding-left: 0.25rem;
+}
+
+/* Highlight labels */
+.summary-content lightning-formatted-rich-text strong,
+.summary-content strong {
+    color: var(--slds-g-color-neutral-base-10, #181818);
+    font-weight: 700;
+}
+
+/* Warning/attention styling - italics in orange */
+.summary-content lightning-formatted-rich-text em,
+.summary-content em {
+    color: var(--slds-g-color-warning-base-40, #a96404);
+    font-style: italic;
+    font-weight: 500;
+}
